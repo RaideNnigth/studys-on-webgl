@@ -1,3 +1,5 @@
+import Cube from './cube.js'
+
 const canvas = document.getElementById('canvas');
 
 /** @type {WebGLRenderingContext} */
@@ -7,56 +9,9 @@ if (!gl) {
     throw new Error('WebGl not supported. User Chrome bro');
 }
 
-const vertexData = [
-
-    // Front
-    0.5, 0.5, 0.5, // top right 
-    0.5, -.5, 0.5, // bottom right
-    -.5, 0.5, 0.5, // top left
-    -.5, 0.5, 0.5, // top left
-    0.5, -.5, 0.5, // bottom right
-    -.5, -.5, 0.5, // bottom left
-
-    // Left
-    -.5, 0.5, 0.5,
-    -.5, -.5, 0.5,
-    -.5, 0.5, -.5,
-    -.5, 0.5, -.5,
-    -.5, -.5, 0.5,
-    -.5, -.5, -.5,
-
-    // Back
-    -.5, 0.5, -.5,
-    -.5, -.5, -.5,
-    0.5, 0.5, -.5,
-    0.5, 0.5, -.5,
-    -.5, -.5, -.5,
-    0.5, -.5, -.5,
-
-    // Right
-    0.5, 0.5, -.5,
-    0.5, -.5, -.5,
-    0.5, 0.5, 0.5,
-    0.5, 0.5, 0.5,
-    0.5, -.5, 0.5,
-    0.5, -.5, -.5,
-
-    // Top
-    0.5, 0.5, 0.5,
-    0.5, 0.5, -.5,
-    -.5, 0.5, 0.5,
-    -.5, 0.5, 0.5,
-    0.5, 0.5, -.5,
-    -.5, 0.5, -.5,
-
-    // Underside
-    0.5, -.5, 0.5,
-    0.5, -.5, -.5,
-    -.5, -.5, 0.5,
-    -.5, -.5, 0.5,
-    0.5, -.5, -.5,
-    -.5, -.5, -.5,
-];
+/** @type {Cube} */
+const cube = new Cube(1);
+const vertexData = cube.vertexData;
 
 // USEFULL FUNCTIONS
 // =================
@@ -114,9 +69,11 @@ attribute vec2 uv;
 
 varying vec2 vUV;
 
+uniform mat4 matrix;
+
 void main(){
     vUV = uv;
-    gl_Position = vec4(position, 1);
+    gl_Position = matrix * vec4(position, 1);
 }    
 `);
     gl.compileShader(vertexShader);
@@ -162,15 +119,26 @@ void main(){
     gl.vertexAttribPointer(uvLocation, 2, gl.FLOAT, false, 0, 0);
 
     gl.useProgram(program);
+
     gl.enable(gl.DEPTH_TEST);
 
-    let uniformLocations = {
+    const uniformLocations = {
         matrix: gl.getUniformLocation(program, `matrix`),
         textureID: gl.getUniformLocation(program, 'textureID'),
     };
 
-    gl.uniform1i(uniformLocations.textureID, 0);
+    function animate() {
+        requestAnimationFrame(animate);
 
-    gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
+        //cube.rotate(Math.PI/2, 'z');
+        //cube.translate(0.001, 0.001, 0);
+        cube.rotate(0.01, 'y')
+
+        gl.uniformMatrix4fv(uniformLocations.matrix, false, cube.modelMatrix)
+        gl.uniform1i(uniformLocations.textureID, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, vertexData.length / 3);
+    }
+
+    animate();
 
 });
